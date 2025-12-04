@@ -1,5 +1,6 @@
 package com.terra.terraPizza.restApi;
 
+import com.terra.terraPizza.Bussines.IPizzaService;
 import com.terra.terraPizza.DataAcces.FavoriteRepository;
 import com.terra.terraPizza.DataAcces.FavoriteRequest;
 import com.terra.terraPizza.DataAcces.ProductRepository;
@@ -22,6 +23,8 @@ import java.util.Optional;
 @RequestMapping("/api/favorites")
 public class FavoriteController {
 
+    private final IPizzaService pizzaService;
+
     @Autowired
     private FavoriteRepository favoriteRepository;
 
@@ -31,50 +34,21 @@ public class FavoriteController {
     @Autowired
     private UserRepository userRepository;
 
-    @PostMapping
-    public ResponseEntity<?> addFavorite(@RequestBody FavoriteRequest request) {
-        String email = getCurrentEmail();
-       // User user = userRepository.findByEmail(email).orElseThrow();
-        User user = userRepository.findByEmail(email);
-        Product product = productRepository.findById(request.getProductId()).orElseThrow();
-
-        //if (favoriteRepository.existsByUserAndProduct(user, product)) {
-         //   return ResponseEntity.status(HttpStatus.CONFLICT).body("Zaten favorilerde");
-       // }
-
-        Optional<Favorite> existing = favoriteRepository.findByUserAndProduct(user, product);
-        if (existing.isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Zaten favorilerde");
-        }
-
-
-        Favorite favorite = new Favorite();
-        favorite.setUser(user);
-        favorite.setProduct(product);
-        favoriteRepository.save(favorite);
-
-        return ResponseEntity.ok("Favoriye eklendi");
+    @Autowired
+    public FavoriteController(IPizzaService pizzaService){
+        this.pizzaService = pizzaService;
     }
 
+    @PostMapping
+    public ResponseEntity<?> addFavorite(@RequestBody FavoriteRequest request) {
+        return pizzaService.addFavorite(request);
+    }
 
 
     @Transactional
     @DeleteMapping("/{productId}")
     public ResponseEntity<?> removeFavorite(@PathVariable Long productId) {
-        String email = getCurrentEmail();
-        User user = userRepository.findByEmail(email);
-        Product product = productRepository.findById(productId).orElseThrow();
-
-        favoriteRepository.deleteByUserAndProduct(user, product);
-        return ResponseEntity.ok("Favoriden çıkarıldı");
+        return pizzaService.removeFavorite(productId);
     }
 
-    private String getCurrentEmail() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserDetails) {
-            return ((UserDetails) principal).getUsername();
-        } else {
-            return principal.toString();
-        }
-    }
 }

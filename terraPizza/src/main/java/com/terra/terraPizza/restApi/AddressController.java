@@ -1,5 +1,7 @@
 package com.terra.terraPizza.restApi;
 
+import com.terra.terraPizza.Bussines.IPizzaService;
+import com.terra.terraPizza.Bussines.PizzaService;
 import com.terra.terraPizza.DataAcces.AddressRepository;
 import com.terra.terraPizza.DataAcces.AddressRequest;
 import com.terra.terraPizza.Entities.Address;
@@ -20,135 +22,41 @@ import java.util.Optional;
 @RequestMapping("/api/addresses")
 public class AddressController {
 
-    @Autowired
-    private AddressRepository addressRepository;
+    private final IPizzaService pizzaService;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    public AddressController(IPizzaService pizzaService){
+        this.pizzaService = pizzaService;
+    }
 
     @PostMapping
     public ResponseEntity<?> addAddress(@RequestBody AddressRequest request) {
-        String email = getCurrentEmail();
-        Optional<User> optionalUser = Optional.ofNullable(userRepository.findByEmail(email));
-
-        if (optionalUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Kullanıcı bulunamadı");
-        }
-
-        User user = optionalUser.get();
-
-        Address address = new Address();
-        address.setTitle(request.getTitle());
-        address.setFullAddress(request.getFullAddress());
-        address.setCity(request.getCity());
-        address.setDistrict(request.getDistrict());
-        address.setUser(user);
-
-        addressRepository.save(address);
-
-        return ResponseEntity.ok("Adres başarıyla eklendi");
+        return pizzaService.addAddress(request);
     }
+
 
     @GetMapping
     public ResponseEntity<?> getUserAddresses() {
-        String email = getCurrentEmail();
-        Optional<User> optionalUser = Optional.ofNullable(userRepository.findByEmail(email));
-
-        if (optionalUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Kullanıcı bulunamadı");
-        }
-
-        User user = optionalUser.get();
-        List<Address> addresses = addressRepository.findByUser(user);
-
-        return ResponseEntity.ok(addresses);
+        return pizzaService.getUserAddresses();
     }
 
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteAddress(@PathVariable Long id) {
-        Optional<Address> optionalAddress = addressRepository.findById(id);
-        if (optionalAddress.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Adres bulunamadı");
-        }
-
-        Address address = optionalAddress.get();
-        String email = getCurrentEmail();
-        if (!address.getUser().getEmail().equals(email)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Bu adrese erişiminiz yok");
-        }
-
-        addressRepository.delete(address);
-        return ResponseEntity.ok("Adres silindi");
+        return pizzaService.deleteAddress(id);
     }
 
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateAddress(@PathVariable Long id, @RequestBody AddressRequest request) {
-        Optional<Address> optionalAddress = addressRepository.findById(id);
-        if (optionalAddress.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Adres bulunamadı");
-        }
-
-        Address address = optionalAddress.get();
-        String email = getCurrentEmail();
-        if (!address.getUser().getEmail().equals(email)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Bu adrese erişiminiz yok");
-        }
-
-        address.setTitle(request.getTitle());
-        address.setFullAddress(request.getFullAddress());
-        address.setCity(request.getCity());
-        address.setDistrict(request.getDistrict());
-
-        addressRepository.save(address);
-        return ResponseEntity.ok("Adres güncellendi");
+       return pizzaService.updateAddress(id,request);
     }
 
 
     @PatchMapping("/{id}/default") // veya @PatchMapping da kullanabilirsin
     public ResponseEntity<?> setDefaultAddress(@PathVariable Long id) {
-        String email = getCurrentEmail();
-        Optional<User> optionalUser = Optional.ofNullable(userRepository.findByEmail(email));
-        if (optionalUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Kullanıcı bulunamadı");
-        }
-
-        User user = optionalUser.get();
-
-        List<Address> addresses = addressRepository.findByUser(user);
-        addresses.forEach(a -> {
-            a.setDefault(false);
-            addressRepository.save(a);
-        });
-
-        Address address = addressRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Adres bulunamadı"));
-
-        if (!address.getUser().getEmail().equals(email)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Bu adrese erişiminiz yok");
-        }
-
-        address.setDefault(true);
-        addressRepository.save(address);
-
-        return ResponseEntity.ok("Varsayılan adres olarak ayarlandı");
+        return pizzaService.setDefaultAddress(id);
     }
 
-
-
-
-
-    private String getCurrentEmail() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserDetails) {
-            return ((UserDetails) principal).getUsername();
-        } else {
-            return principal.toString();
-        }
-    }
 }
 

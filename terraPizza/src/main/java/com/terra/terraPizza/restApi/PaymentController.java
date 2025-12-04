@@ -32,8 +32,6 @@ public class PaymentController {
          result.put("errorMessage", payment.getErrorMessage());
      }
 
-
-
      if ("success".equalsIgnoreCase((String) result.get("status"))) {
             Order order = orderRepository.findById(orderId).orElseThrow();
             order.setPaymentStatus(1);

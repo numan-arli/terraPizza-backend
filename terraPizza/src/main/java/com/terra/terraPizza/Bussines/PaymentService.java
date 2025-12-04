@@ -23,15 +23,13 @@ import java.util.Optional;
 @Service
 public class PaymentService {
 
-    @Autowired
     private final OrderRepository orderRepository;
 
+    @Autowired
     public PaymentService(OrderRepository orderRepository) {
         this.orderRepository = orderRepository;
 
     }
-
-
 
     private Options getOptions() {
         Options options = new Options();
@@ -109,4 +107,8 @@ public class PaymentService {
         // Ödemeyi oluştur
         return Payment.create(request, options);
     }
+
+
+
+
 }

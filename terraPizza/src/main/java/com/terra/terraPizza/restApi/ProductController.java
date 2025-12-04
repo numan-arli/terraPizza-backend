@@ -1,5 +1,6 @@
 package com.terra.terraPizza.restApi;
 
+import com.terra.terraPizza.Bussines.IPizzaService;
 import com.terra.terraPizza.DataAcces.ProductRepository;
 import com.terra.terraPizza.Entities.Product;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,14 @@ public class ProductController {
     @Autowired
     ProductRepository productRepository;
 
+    private final IPizzaService pizzaService;
+
+    public ProductController(IPizzaService pizzaService){
+        this.pizzaService = pizzaService;
+    }
+
     @GetMapping
     public List<Product> getByCategory(@RequestParam String category) {
-        return productRepository.findByCategory(category);
+        return pizzaService.getByCategory(category);
     }
 }
