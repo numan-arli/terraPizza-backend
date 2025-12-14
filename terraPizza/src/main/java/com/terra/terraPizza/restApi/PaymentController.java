@@ -18,34 +18,14 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PaymentController {
 
-    private final PaymentService paymentService;
+    private final IPaymentService paymentService;
     private final OrderRepository orderRepository;
+
  @PostMapping("/non3d/{orderId}")
-    public ResponseEntity<?> payNon3D(@PathVariable Long orderId, @RequestBody CardInfoDto cardInfo) {
+     public ResponseEntity<?> payNon3D(@PathVariable Long orderId, @RequestBody CardInfoDto cardInfo) {
 
      Payment payment = paymentService.createPayment(orderId, cardInfo); // Payment nesnesi al
-
-     Map<String, Object> result = new HashMap<>();
-     result.put("status", payment.getStatus());
-
-     if (payment.getErrorMessage() != null) {
-         result.put("errorMessage", payment.getErrorMessage());
-     }
-
-     if ("success".equalsIgnoreCase((String) result.get("status"))) {
-            Order order = orderRepository.findById(orderId).orElseThrow();
-            order.setPaymentStatus(1);
-            order.setConversationId(payment.getConversationId());
-            order.setStatus("ödeme alındı");
-            orderRepository.save(order);
-            return ResponseEntity.ok(Map.of("status", "success"));
-        } else {
-         System.out.println("errorCode:" + payment.getErrorCode() + " " + "errorMessage: " + payment.getErrorMessage());
-            return ResponseEntity.status(402).body(Map.of(
-                    "status", "failed",
-                    "error", result.get("errorMessage")
-            ));
-        }
+     return paymentService.paymentstatus(orderId, payment);
     }
 }
 
