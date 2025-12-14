@@ -8,20 +8,19 @@ import com.iyzipay.model.Address;
 import com.iyzipay.model.BasketItem;
 import com.iyzipay.model.BasketItemType;
 import com.iyzipay.model.Currency;
-import java.util.UUID;
+
+import java.util.*;
+
 import com.iyzipay.request.CreatePaymentRequest;
 import com.terra.terraPizza.DataAcces.OrderRepository;
 import com.terra.terraPizza.Entities.CardInfoDto;
 import com.terra.terraPizza.Entities.Order;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 @Service
-public class PaymentService {
+public class PaymentService implements IPaymentService {
 
     private final OrderRepository orderRepository;
 
@@ -31,7 +30,7 @@ public class PaymentService {
 
     }
 
-    private Options getOptions() {
+    public Options getOptions() {
         Options options = new Options();
         options.setApiKey("sandbox-kBxcYm3MrhR3pB2yQKog1AENWuICGL9v"); // kendi key'inle değiştir
         options.setSecretKey("sandbox-zjkuKN107rCi5RBVQbb6nLDTweQsr2Z1");
@@ -108,6 +107,29 @@ public class PaymentService {
         return Payment.create(request, options);
     }
 
+    public ResponseEntity<?> paymentstatus(Long orderId,Payment payment){
+        Map<String, Object> result = new HashMap<>();
+        result.put("status", payment.getStatus());
+
+        if (payment.getErrorMessage() != null) {
+            result.put("errorMessage", payment.getErrorMessage());
+        }
+
+        if ("success".equalsIgnoreCase((String) result.get("status"))) {
+            Order order = orderRepository.findById(orderId).orElseThrow();
+            order.setPaymentStatus(1);
+            order.setConversationId(payment.getConversationId());
+            order.setStatus("ödeme alındı");
+            orderRepository.save(order);
+            return ResponseEntity.ok(Map.of("status", "success"));
+        } else {
+            System.out.println("errorCode:" + payment.getErrorCode() + " " + "errorMessage: " + payment.getErrorMessage());
+            return ResponseEntity.status(402).body(Map.of(
+                    "status", "failed",
+                    "error", result.get("errorMessage")
+            ));
+        }
+    }
 
 
 
