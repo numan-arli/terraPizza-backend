@@ -377,7 +377,7 @@ public class PizzaService implements IPizzaService {
         return ResponseEntity.ok(user);
     }
 
-    public ResponseEntity<?> updateProfile(@RequestBody UserProfileUpdateRequest request) {
+    public ResponseEntity<?> updateProfile(UserProfileUpdateRequest request) {
         String email = getCurrentEmail();
         Optional<User> optionalUser = Optional.ofNullable(userRepository.findByEmail(email));
 
@@ -402,7 +402,7 @@ public class PizzaService implements IPizzaService {
     }
 
 
-    public ResponseEntity<?> changePassword(@RequestBody PasswordChangeRequest request) {
+    public ResponseEntity<?> changePassword(PasswordChangeRequest request) {
         String email = getCurrentEmail(); // JWT'den email al
         Optional<User> optionalUser = Optional.ofNullable(userRepository.findByEmail(email));
 
